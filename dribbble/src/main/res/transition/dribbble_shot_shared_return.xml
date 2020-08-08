@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright 2015 Google Inc.
+  Copyright 2015 Google LLC.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -36,6 +36,16 @@
     <transition
         class="io.plaidapp.core.ui.transitions.DeparallaxingChangeBounds"
         android:interpolator="@android:interpolator/fast_out_slow_in">
+        <targets>
+            <target android:targetId="@id/shot" />
+        </targets>
+    </transition>
+
+    <transition
+        class="io.plaidapp.core.ui.transitions.DarkenImage"
+        app:initialRgbScale="1.0"
+        app:finalRgbScale="0.85"
+        android:interpolator="@android:interpolator/linear">
         <targets>
             <target android:targetId="@id/shot" />
         </targets>

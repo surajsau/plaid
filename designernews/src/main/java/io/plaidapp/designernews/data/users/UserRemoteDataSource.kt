@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@
 package io.plaidapp.designernews.data.users
 
 import io.plaidapp.core.data.Result
-import io.plaidapp.core.designernews.data.api.DesignerNewsService
 import io.plaidapp.core.designernews.data.users.model.User
 import io.plaidapp.core.util.safeApiCall
+import io.plaidapp.designernews.data.api.DesignerNewsService
 import java.io.IOException
+import javax.inject.Inject
 
 /**
  * Class that requests users from the service.
  */
-class UserRemoteDataSource(private val service: DesignerNewsService) {
+class UserRemoteDataSource @Inject constructor(private val service: DesignerNewsService) {
 
     suspend fun getUsers(userIds: List<Long>) = safeApiCall(
         call = { requestGetUsers(userIds) },
@@ -35,7 +36,7 @@ class UserRemoteDataSource(private val service: DesignerNewsService) {
     private suspend fun requestGetUsers(userIds: List<Long>): Result<List<User>> {
         val requestIds = userIds.joinToString(",")
 
-        val response = service.getUsers(requestIds).await()
+        val response = service.getUsers(requestIds)
         if (response.isSuccessful) {
             val body = response.body()
             if (body != null) {

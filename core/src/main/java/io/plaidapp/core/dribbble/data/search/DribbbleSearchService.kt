@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,49 +16,27 @@
 
 package io.plaidapp.core.dribbble.data.search
 
-import android.support.annotation.StringDef
-
 import io.plaidapp.core.dribbble.data.api.model.Shot
-import kotlinx.coroutines.experimental.Deferred
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
 /**
- * Fake-API for searching dribbble
+ * Search Dribbble by scraping website
  */
 interface DribbbleSearchService {
 
-    @Deprecated("Move to DribbbleSearchService#searchDeferred")
     @GET("search")
-    fun search(
-        @Query("q") query: String,
-        @Query("page") page: Int?,
-        @Query("per_page") pageSize: Int,
-        @Query("s") @SortOrder sort: String
-    ): Call<List<Shot>>
-
-    @GET("search")
-    fun searchDeferred(
+    suspend fun searchDeferred(
         @Query("q") query: String,
         @Query("page") page: Int?,
         @Query("s") sort: String,
         @Query("per_page") pageSize: Int
-    ): Deferred<Response<List<Shot>>>
-
-    @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
-    @StringDef(
-        SORT_POPULAR,
-        SORT_RECENT
-    )
-    annotation class SortOrder
+    ): Response<List<Shot>>
 
     companion object {
 
         const val ENDPOINT = "https://dribbble.com/"
-        const val SORT_POPULAR = ""
-        const val SORT_RECENT = "latest"
         const val PER_PAGE_DEFAULT = 12
     }
 }

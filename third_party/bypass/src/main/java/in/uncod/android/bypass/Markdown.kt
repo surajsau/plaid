@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package `in`.uncod.android.bypass
 
 import android.content.res.ColorStateList
-import android.support.annotation.ColorInt
+import androidx.annotation.ColorInt
 
 /**
  *  Interface for Markdown capabilities.

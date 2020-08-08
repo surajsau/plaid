@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 package io.plaidapp.core.util
 
-import android.support.test.InstrumentationRegistry
 import android.widget.TextView
+import androidx.test.platform.app.InstrumentationRegistry
+import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.concurrent.atomic.AtomicBoolean
 
 class TextViewExtensionTest {
 
-    private val context = InstrumentationRegistry.getContext()
+    private val context = InstrumentationRegistry.getInstrumentation().context
     private val view = TextView(context)
 
     @Test

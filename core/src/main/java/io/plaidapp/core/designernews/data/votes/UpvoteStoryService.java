@@ -20,14 +20,16 @@ package io.plaidapp.core.designernews.data.votes;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-
-import io.plaidapp.core.designernews.Injection;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import io.plaidapp.core.dagger.designernews.Injector;
 import io.plaidapp.core.designernews.data.api.DesignerNewsService;
 import io.plaidapp.core.designernews.data.login.LoginRepository;
 import io.plaidapp.core.designernews.data.stories.model.Story;
 import retrofit2.Call;
 import retrofit2.Response;
+
+import javax.inject.Inject;
 
 public class UpvoteStoryService extends IntentService {
 
@@ -36,6 +38,15 @@ public class UpvoteStoryService extends IntentService {
 
     public UpvoteStoryService() {
         super("UpvoteStoryService");
+    }
+
+    @Inject DesignerNewsService service;
+    @Inject LoginRepository repository;
+
+    @Override
+    public void onStart(@Nullable Intent intent, int startId) {
+        super.onStart(intent, startId);
+        Injector.inject(this);
     }
 
     public static void startActionUpvote(@NonNull Context context, long storyId) {
@@ -57,8 +68,7 @@ public class UpvoteStoryService extends IntentService {
 
     private void handleActionUpvote(long storyId) {
         if (storyId == 0L) return;
-        final DesignerNewsService service = Injection.provideDesignerNewsService(this);
-        final LoginRepository repository = Injection.provideLoginRepository(this);
+
         if (!repository.isLoggedIn()) {
             // TODO prompt for login
             return;

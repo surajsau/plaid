@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,31 @@
 
 package io.plaidapp.test.shared
 
-import io.plaidapp.core.data.CoroutinesContextProvider
-import kotlinx.coroutines.experimental.Unconfined
+import io.plaidapp.core.data.CoroutinesDispatcherProvider
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestCoroutineDispatcher
 
-fun provideFakeCoroutinesContextProvider(): CoroutinesContextProvider =
-        CoroutinesContextProvider(Unconfined, Unconfined)
+@ExperimentalCoroutinesApi
+fun provideFakeCoroutinesDispatcherProvider(
+    main: CoroutineDispatcher? = null,
+    computation: CoroutineDispatcher? = null,
+    io: CoroutineDispatcher? = null
+): CoroutinesDispatcherProvider {
+    val sharedTestCoroutineDispatcher = TestCoroutineDispatcher()
+    return CoroutinesDispatcherProvider(
+        main ?: sharedTestCoroutineDispatcher,
+        computation ?: sharedTestCoroutineDispatcher,
+        io ?: sharedTestCoroutineDispatcher)
+}
+
+@ExperimentalCoroutinesApi
+fun provideFakeCoroutinesDispatcherProvider(
+    dispatcher: TestCoroutineDispatcher?
+): CoroutinesDispatcherProvider {
+    val sharedTestCoroutineDispatcher = TestCoroutineDispatcher()
+    return CoroutinesDispatcherProvider(
+        dispatcher ?: sharedTestCoroutineDispatcher,
+        dispatcher ?: sharedTestCoroutineDispatcher,
+        dispatcher ?: sharedTestCoroutineDispatcher)
+}

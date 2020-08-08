@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ package io.plaidapp.core.designernews.data.login
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import io.plaidapp.core.designernews.data.login.model.LoggedInUser
+import javax.inject.Inject
 
 /**
  * Local storage for Designer News login related data, implemented using SharedPreferences
  */
-class LoginLocalDataSource(private val prefs: SharedPreferences) {
+class LoginLocalDataSource @Inject constructor(private val prefs: SharedPreferences) {
 
     /**
      * Instance of the logged in user. If missing, null is returned

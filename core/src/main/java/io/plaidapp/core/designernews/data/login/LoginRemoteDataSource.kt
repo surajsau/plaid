@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,17 @@ package io.plaidapp.core.designernews.data.login
 import io.plaidapp.core.BuildConfig
 import io.plaidapp.core.data.Result
 import io.plaidapp.core.designernews.data.api.DesignerNewsService
-import io.plaidapp.core.designernews.data.login.model.toLoggedInUser
 import io.plaidapp.core.designernews.data.login.model.LoggedInUser
+import io.plaidapp.core.designernews.data.login.model.toLoggedInUser
 import io.plaidapp.core.util.safeApiCall
 import java.io.IOException
+import javax.inject.Inject
 
 /**
  * Remote data source for Designer News login data. Knows which API calls need to be triggered
  * for login (auth and /me) and updates the auth token after authorizing.
  */
-class LoginRemoteDataSource(
+class LoginRemoteDataSource @Inject constructor(
     private val tokenLocalDataSource: AuthTokenLocalDataSource,
     val service: DesignerNewsService
 ) {
@@ -46,7 +47,7 @@ class LoginRemoteDataSource(
     )
 
     private suspend fun requestLogin(username: String, password: String): Result<LoggedInUser> {
-        val response = service.login(buildLoginParams(username, password)).await()
+        val response = service.login(buildLoginParams(username, password))
         if (response.isSuccessful) {
             val body = response.body()
             if (body != null) {
@@ -59,7 +60,7 @@ class LoginRemoteDataSource(
     }
 
     private suspend fun requestUser(): Result<LoggedInUser> {
-        val response = service.getAuthedUser().await()
+        val response = service.getAuthedUser()
         if (response.isSuccessful) {
             val users = response.body()
             if (users != null && users.isNotEmpty()) {

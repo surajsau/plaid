@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,22 @@
 
 package io.plaidapp.core.dribbble.data.search
 
-import com.nhaarman.mockito_kotlin.doAnswer
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockitokotlin2.doAnswer
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
 import io.plaidapp.core.data.Result
 import io.plaidapp.core.dribbble.data.api.model.Shot
 import io.plaidapp.core.dribbble.data.errorResponseBody
 import io.plaidapp.core.dribbble.data.search.SearchRemoteDataSource.SortOrder
 import io.plaidapp.core.dribbble.data.shots
-import kotlinx.coroutines.experimental.CompletableDeferred
-import kotlinx.coroutines.experimental.runBlocking
+import java.net.UnknownHostException
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.Response
-import java.net.UnknownHostException
 
 /**
  * Tests for [SearchRemoteDataSource] which mocks the search service dependency.
@@ -44,7 +43,7 @@ class SearchRemoteDataSourceTest {
 
     private val query = "Plaid shirts"
     private val page = 0
-    private val defaultSortOrder = DribbbleSearchService.SORT_RECENT
+    private val defaultSortOrder = SortOrder.RECENT.sort
     private val defaultResultsPerPage = DribbbleSearchService.PER_PAGE_DEFAULT
 
     @Test
@@ -64,8 +63,7 @@ class SearchRemoteDataSourceTest {
     fun search_whenRequestFailed() = runBlocking {
         // Given that the service responds with failure
         val result = Response.error<List<Shot>>(400, errorResponseBody)
-        whenever(service.searchDeferred(query, page, defaultSortOrder, defaultResultsPerPage))
-            .thenReturn(CompletableDeferred(result))
+        whenever(service.searchDeferred(query, page, defaultSortOrder, defaultResultsPerPage)).thenReturn(result)
 
         // When performing a search
         val response = dataSource.search(query, page, SortOrder.RECENT, defaultResultsPerPage)
@@ -88,30 +86,33 @@ class SearchRemoteDataSourceTest {
 
     @Test
     fun search_defaultParams() {
-        // Given that the service responds with success when called
-        withSuccess(shots)
+        runBlocking {
+            // Given that the service responds with success when called
+            withSuccess(shots)
 
-        // When performing a search without specifying the sort or results per page
-        runBlocking { dataSource.search(query, page) }
+            // When performing a search without specifying the sort or results per page
+            dataSource.search(query, page)
 
-        // Then the default values for these params are used
-        verify(service).searchDeferred(query, page, defaultSortOrder, defaultResultsPerPage)
+            // Then the default values for these params are used
+            verify(service).searchDeferred(query, page, defaultSortOrder, defaultResultsPerPage)
+        }
     }
 
     @Test
     fun search_nonDefaultParams() {
-        // Given that the service responds with success when called
-        val popularSearchParam = ""
-        val customPerPage = 20
-        val result = Response.success(shots)
-        whenever(service.searchDeferred(query, page, popularSearchParam, customPerPage))
-            .thenReturn(CompletableDeferred(result))
+        runBlocking {
+            // Given that the service responds with success when called
+            val popularSearchParam = ""
+            val customPerPage = 20
+            val result = Response.success(shots)
+            whenever(service.searchDeferred(query, page, popularSearchParam, customPerPage)).thenReturn(result)
 
-        // When performing a search & specifying non-default sort & results per page
-        runBlocking { dataSource.search(query, page, SortOrder.POPULAR, customPerPage) }
+            // When performing a search & specifying non-default sort & results per page
+            dataSource.search(query, page, SortOrder.POPULAR, customPerPage)
 
-        // Then the supplied values for these params are used
-        verify(service).searchDeferred(query, page, popularSearchParam, customPerPage)
+            // Then the supplied values for these params are used
+            verify(service).searchDeferred(query, page, popularSearchParam, customPerPage)
+        }
     }
 
     @Test
@@ -127,9 +128,8 @@ class SearchRemoteDataSourceTest {
         assertTrue(response is Result.Error)
     }
 
-    private fun withSuccess(shots: List<Shot>?) {
+    private suspend fun withSuccess(shots: List<Shot>?) {
         val result = Response.success(shots)
-        whenever(service.searchDeferred(query, page, defaultSortOrder, defaultResultsPerPage))
-            .thenReturn(CompletableDeferred(result))
+        whenever(service.searchDeferred(query, page, defaultSortOrder, defaultResultsPerPage)).thenReturn(result)
     }
 }

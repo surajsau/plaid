@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright 2016 Google Inc.
+  Copyright 2016 Google LLC.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
         android:shortcutDisabledMessage="@string/shortcut_search_disabled">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetClass="io.plaidapp.ui.search.SearchActivity"
+            android:targetClass="io.plaidapp.search.ui.SearchActivity"
             android:targetPackage="io.plaidapp" />
     </shortcut>
 

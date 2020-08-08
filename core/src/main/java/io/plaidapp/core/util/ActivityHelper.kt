@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ package io.plaidapp.core.util
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.support.customtabs.CustomTabsIntent
-import android.support.customtabs.CustomTabsSession
-import android.support.v4.content.ContextCompat
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.browser.customtabs.CustomTabsSession
+import androidx.core.content.ContextCompat
 import io.plaidapp.core.R
 import io.plaidapp.core.designernews.data.votes.UpvoteStoryService
 
@@ -109,16 +109,6 @@ object Activities {
                         .addDefaultShareMenuItem()
             }
         }
-
-        /**
-         * PostNewDesignerNewsStory Activity
-         */
-        object PostStory : AddressableActivity {
-            override val className = "$PACKAGE_NAME.designernews.PostNewDesignerNewsStory"
-
-            const val RESULT_DRAG_DISMISSED = 3
-            const val RESULT_POSTING = 4
-        }
     }
 
     /**
@@ -140,7 +130,7 @@ object Activities {
      * SearchActivity
      */
     object Search : AddressableActivity {
-        override val className = "$PACKAGE_NAME.ui.search.SearchActivity"
+        override val className = "$PACKAGE_NAME.search.ui.SearchActivity"
 
         const val EXTRA_QUERY = "EXTRA_QUERY"
         const val EXTRA_SAVE_DRIBBBLE = "EXTRA_SAVE_DRIBBBLE"

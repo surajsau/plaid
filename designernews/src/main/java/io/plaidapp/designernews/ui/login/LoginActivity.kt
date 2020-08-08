@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,31 @@
 package io.plaidapp.designernews.ui.login
 
 import android.app.Activity
-import android.arch.lifecycle.Observer
-import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
-import android.support.annotation.StringRes
-import android.support.design.widget.Snackbar
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatActivity
 import android.transition.TransitionManager
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
+import androidx.lifecycle.Observer
+import com.google.android.material.snackbar.Snackbar
+import io.plaidapp.R as appR
+import io.plaidapp.core.R as coreR
 import io.plaidapp.core.ui.transitions.FabTransform
 import io.plaidapp.core.ui.transitions.MorphTransform
+import io.plaidapp.core.util.ColorUtils
 import io.plaidapp.core.util.delegates.contentView
 import io.plaidapp.core.util.doAfterTextChanged
 import io.plaidapp.core.util.event.EventObserver
 import io.plaidapp.designernews.R
+import io.plaidapp.designernews.dagger.inject
 import io.plaidapp.designernews.databinding.ActivityDesignerNewsLoginBinding
 import io.plaidapp.designernews.databinding.ToastLoggedInConfirmationBinding
-import io.plaidapp.designernews.provideViewModelFactory
-import io.plaidapp.R as appR
+import javax.inject.Inject
 
 class LoginActivity : AppCompatActivity() {
 
@@ -48,15 +49,15 @@ class LoginActivity : AppCompatActivity() {
         R.layout.activity_designer_news_login
     )
 
-    private lateinit var viewModel: LoginViewModel
+    @Inject
+    lateinit var viewModel: LoginViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val factory = provideViewModelFactory(this)
-        viewModel = ViewModelProviders.of(this, factory).get(LoginViewModel::class.java)
+        inject(this)
 
-        binding.setLifecycleOwner(this)
+        binding.lifecycleOwner = this
         binding.viewModel = viewModel
 
         viewModel.uiState.observe(this, Observer {
@@ -82,7 +83,7 @@ class LoginActivity : AppCompatActivity() {
             MorphTransform.setup(
                 this,
                 binding.container,
-                ContextCompat.getColor(this, appR.color.background_light),
+                ColorUtils.getThemeColor(this, coreR.attr.colorSurface),
                 resources.getDimensionPixelSize(appR.dimen.dialog_corners)
             )
         }

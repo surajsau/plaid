@@ -1,11 +1,11 @@
 /*
- * Copyright 2015 Google Inc.
+ * Copyright 2015 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,9 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
+apply from: '../shared_dependencies.gradle'
+apply from: '../test_dependencies.gradle'
+
 android {
     compileSdkVersion versions.compileSdk
 
@@ -28,15 +31,14 @@ android {
         minSdkVersion versions.minSdk
         targetSdkVersion versions.targetSdk
         versionCode rootProject.gitCommitCount
-        versionName = '1.0.5'
+        versionName = '1.1.0'
         archivesBaseName = 'plaid'
 
-        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
 
         resConfig 'en'
-        buildConfigField 'String', 'GIT_SHA', "\"${gitSha}\""
         manifestPlaceholders += [
-                crashlyticsEnabled: false
+            crashlyticsEnabled: false
         ]
     }
 
@@ -47,7 +49,8 @@ android {
     buildTypes {
         release {
             // There's a Dex Splitter issue when enabling DataBinding & proguard in dynamic features
-            // The temporary workaround is to disable shrinking
+            // The temporary workaround is to disable shrinking.
+            // This issue is tracked in: https://issuetracker.google.com/120517460
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
                     'proguard-rules.pro'
@@ -63,26 +66,27 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    dynamicFeatures = [':about', ':designernews', ':dribbble']
-}
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 
-repositories {
-    google()
-    maven { url 'https://maven.fabric.io/public' }
-    jcenter()
+    dynamicFeatures = [
+        ':about',
+        ':designernews',
+        ':dribbble',
+        ':search'
+    ]
 }
 
 dependencies {
-    api project(':core')
-
-    implementation project(':search')
-
+    implementation project(':core')
+    implementation "androidx.appcompat:appcompat:${versions.appcompat}"
     implementation "com.crashlytics.sdk.android:crashlytics:${versions.crashlytics}"
     implementation "com.google.firebase:firebase-core:${versions.firebase}"
+    implementation "com.github.bumptech.glide:glide:${versions.glide}"
+    implementation "com.github.bumptech.glide:recyclerview-integration:${versions.glide}"
 
-    androidTestImplementation "com.android.support.test:rules:${versions.test_rules}"
-    androidTestImplementation "com.android.support.test.espresso:espresso-contrib:${versions.espresso}"
-    androidTestImplementation "com.android.support.test.uiautomator:uiautomator-v18:${versions.ui_automator}"
+    kapt "com.google.dagger:dagger-compiler:${versions.dagger}"
 }
 
 // Must be applied after dependencies. See https://stackoverflow.com/a/38018985

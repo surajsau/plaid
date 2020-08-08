@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,21 @@
 
 package io.plaidapp.designernews.data.users
 
-import com.nhaarman.mockito_kotlin.doAnswer
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockitokotlin2.doAnswer
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
 import io.plaidapp.core.data.Result
-import io.plaidapp.core.designernews.data.api.DesignerNewsService
 import io.plaidapp.core.designernews.data.users.model.User
-import kotlinx.coroutines.experimental.CompletableDeferred
-import kotlinx.coroutines.experimental.runBlocking
-import okhttp3.MediaType
-import okhttp3.ResponseBody
+import io.plaidapp.designernews.data.api.DesignerNewsService
+import java.net.UnknownHostException
+import kotlinx.coroutines.runBlocking
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.Response
-import java.net.UnknownHostException
 
 /**
  * Tests for [UserRemoteDataSource] with mocked dependencies.
@@ -52,7 +51,7 @@ class UserRemoteDataSourceTest {
         portraitUrl = "www"
     )
     private val users = listOf(user1, user2)
-    private val errorResponseBody = ResponseBody.create(MediaType.parse(""), "Error")
+    private val errorResponseBody = "Error".toResponseBody("".toMediaTypeOrNull())
 
     private val service: DesignerNewsService = mock()
     private val dataSource = UserRemoteDataSource(service)
@@ -96,16 +95,16 @@ class UserRemoteDataSourceTest {
         assertTrue(result is Result.Error)
     }
 
-    private fun withUsersSuccess(ids: String, users: List<User>) {
+    private suspend fun withUsersSuccess(ids: String, users: List<User>) {
         val result = Response.success(users)
-        whenever(service.getUsers(ids)).thenReturn(CompletableDeferred(result))
+        whenever(service.getUsers(ids)).thenReturn(result)
     }
 
-    private fun withUsersError(ids: String) {
+    private suspend fun withUsersError(ids: String) {
         val result = Response.error<List<User>>(
             400,
             errorResponseBody
         )
-        whenever(service.getUsers(ids)).thenReturn(CompletableDeferred(result))
+        whenever(service.getUsers(ids)).thenReturn(result)
     }
 }

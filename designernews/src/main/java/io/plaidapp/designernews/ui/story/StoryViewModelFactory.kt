@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,13 @@
 
 package io.plaidapp.designernews.ui.story
 
-import android.arch.lifecycle.ViewModel
-import android.arch.lifecycle.ViewModelProvider
-import io.plaidapp.core.data.CoroutinesContextProvider
-import io.plaidapp.designernews.domain.CommentsWithRepliesAndUsersUseCase
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import io.plaidapp.core.data.CoroutinesDispatcherProvider
+import io.plaidapp.designernews.domain.GetCommentsWithRepliesAndUsersUseCase
 import io.plaidapp.designernews.domain.GetStoryUseCase
 import io.plaidapp.designernews.domain.PostReplyUseCase
 import io.plaidapp.designernews.domain.PostStoryCommentUseCase
-import io.plaidapp.designernews.domain.UpvoteCommentUseCase
-import io.plaidapp.designernews.domain.UpvoteStoryUseCase
 
 /**
  * Factory for creating [StoryViewModel] with args.
@@ -34,10 +32,8 @@ class StoryViewModelFactory(
     private val getStoryUseCase: GetStoryUseCase,
     private var postStoryComment: PostStoryCommentUseCase,
     private var postReply: PostReplyUseCase,
-    private val commentsWithRepliesAndUsersUseCase: CommentsWithRepliesAndUsersUseCase,
-    private val upvoteStoryUseCase: UpvoteStoryUseCase,
-    private val upvoteCommentUseCase: UpvoteCommentUseCase,
-    private val contextProvider: CoroutinesContextProvider
+    private val getCommentsWithRepliesAndUsersUseCase: GetCommentsWithRepliesAndUsersUseCase,
+    private val dispatcherProvider: CoroutinesDispatcherProvider
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -50,10 +46,8 @@ class StoryViewModelFactory(
             getStoryUseCase,
             postStoryComment,
             postReply,
-            commentsWithRepliesAndUsersUseCase,
-            upvoteStoryUseCase,
-            upvoteCommentUseCase,
-            contextProvider
+            getCommentsWithRepliesAndUsersUseCase,
+            dispatcherProvider
         ) as T
     }
 }

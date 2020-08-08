@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright 2016 Google Inc.
+  Copyright 2016 Google LLC.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@
 
             <objectAnimator
                 android:propertyName="backgroundColor"
-                android:valueFrom="@color/background_light"
-                android:valueTo="@color/selected_comment_background"
+                android:valueFrom="@color/color_surface"
+                android:valueTo="@color/color_highlighted_surface"
                 android:duration="@android:integer/config_shortAnimTime"
                 android:valueType="colorType" />
 
@@ -45,8 +45,8 @@
 
             <objectAnimator
                 android:propertyName="backgroundColor"
-                android:valueFrom="@color/selected_comment_background"
-                android:valueTo="@color/background_light"
+                android:valueFrom="@color/color_highlighted_surface"
+                android:valueTo="@color/color_surface"
                 android:duration="@android:integer/config_shortAnimTime"
                 android:valueType="colorType" />
 

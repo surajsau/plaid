@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,26 @@
 
 package io.plaidapp.core.designernews.data.login
 
-import com.nhaarman.mockito_kotlin.any
-import com.nhaarman.mockito_kotlin.doAnswer
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.never
-import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.doAnswer
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.never
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
 import io.plaidapp.core.data.Result
 import io.plaidapp.core.designernews.data.api.DesignerNewsService
 import io.plaidapp.core.designernews.data.login.model.AccessToken
+import io.plaidapp.core.designernews.data.login.model.LoggedInUser
 import io.plaidapp.core.designernews.data.login.model.LoggedInUserResponse
 import io.plaidapp.core.designernews.data.login.model.UserLinks
-import io.plaidapp.core.designernews.data.login.model.LoggedInUser
 import io.plaidapp.core.designernews.errorResponseBody
-import kotlinx.coroutines.experimental.CompletableDeferred
-import kotlinx.coroutines.experimental.runBlocking
+import java.net.UnknownHostException
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.Response
-import java.net.UnknownHostException
 
 /**
  * Tests for [LoginRemoteDataSource] using shared preferences from instrumentation
@@ -80,9 +79,9 @@ class LoginRemoteDataSourceTest {
     fun login_successful_when_AccessTokenAndGetUserSuccessful() = runBlocking {
         // Given that all API calls are successful
         val accessTokenResponse = Response.success(accessToken)
-        whenever(service.login(any())).thenReturn(CompletableDeferred(accessTokenResponse))
+        whenever(service.login(any())).thenReturn(accessTokenResponse)
         val authUserResponse = Response.success(listOf(response))
-        whenever(service.getAuthedUser()).thenReturn(CompletableDeferred(authUserResponse))
+        whenever(service.getAuthedUser()).thenReturn(authUserResponse)
 
         // When logging in
         val result = dataSource.login("test", "test")
@@ -98,7 +97,7 @@ class LoginRemoteDataSourceTest {
             400,
             errorResponseBody
         )
-        whenever(service.login(any())).thenReturn(CompletableDeferred(failureResponse))
+        whenever(service.login(any())).thenReturn(failureResponse)
 
         // When logging in
         val result = dataSource.login("test", "test")
@@ -113,13 +112,13 @@ class LoginRemoteDataSourceTest {
     fun login_failed_whenGetUserFailed() = runBlocking {
         // Given that the access token is retrieved successfully
         val accessTokenRespone = Response.success(accessToken)
-        whenever(service.login(any())).thenReturn(CompletableDeferred(accessTokenRespone))
+        whenever(service.login(any())).thenReturn(accessTokenRespone)
         // And the get authed user failed
         val failureResponse = Response.error<List<LoggedInUserResponse>>(
             400,
             errorResponseBody
         )
-        whenever(service.getAuthedUser()).thenReturn(CompletableDeferred(failureResponse))
+        whenever(service.getAuthedUser()).thenReturn(failureResponse)
 
         // When logging in
         val result = dataSource.login("test", "test")
@@ -147,7 +146,7 @@ class LoginRemoteDataSourceTest {
     fun login_failed_whenGetUserThrowsException() = runBlocking {
         // Given that the access token is retrieved successfully
         val accessTokenRespone = Response.success(accessToken)
-        whenever(service.login(any())).thenReturn(CompletableDeferred(accessTokenRespone))
+        whenever(service.login(any())).thenReturn(accessTokenRespone)
         // And the get authed user throws an exception
         doAnswer { throw UnknownHostException() }
             .whenever(service).getAuthedUser()

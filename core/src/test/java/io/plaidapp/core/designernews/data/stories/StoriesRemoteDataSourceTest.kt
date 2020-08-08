@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,23 @@
 
 package io.plaidapp.core.designernews.data.stories
 
-import com.nhaarman.mockito_kotlin.doAnswer
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockitokotlin2.doAnswer
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
 import io.plaidapp.core.data.Result
 import io.plaidapp.core.designernews.data.api.DesignerNewsService
 import io.plaidapp.core.designernews.data.stories.model.StoryResponse
 import io.plaidapp.core.designernews.errorResponseBody
 import io.plaidapp.core.designernews.storyLinks
-import kotlinx.coroutines.experimental.CompletableDeferred
-import kotlinx.coroutines.experimental.runBlocking
+import java.net.UnknownHostException
+import java.util.Date
+import java.util.GregorianCalendar
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.Response
-import java.net.UnknownHostException
-import java.util.Date
-import java.util.GregorianCalendar
 
 /**
  * Test for [StoriesRemoteDataSource] mocking all dependencies.
@@ -101,21 +100,23 @@ class StoriesRemoteDataSourceTest {
     @Test
     fun search_withSuccess() = runBlocking {
         // Given that the service responds with success
-        withSearchSuccess(query, 2, stories)
+        val storyIds = stories.map { it.id.toString() }
+        whenever(service.search(query, 2)).thenReturn(Response.success(storyIds))
+        val commaSeparatedIds = storyIds.joinToString(",")
+        whenever(service.getStories(commaSeparatedIds)).thenReturn(Response.success(stories))
 
         // When searching for stories
         val result = dataSource.search(query, 2)
 
-        // Then there's one request to the service
-        verify(service).search(query, 2)
         // Then the correct list of stories is returned
         assertEquals(Result.Success(stories), result)
     }
 
     @Test
-    fun search_withError() = runBlocking {
+    fun search_withErrorScrapingResults() = runBlocking {
         // Given that the service responds with error
-        withSearchError(query, 1)
+        val error = Response.error<List<String>>(400, errorResponseBody)
+        whenever(service.search(query, 1)).thenReturn(error)
 
         // When searching for stories
         val result = dataSource.search(query, 1)
@@ -125,9 +126,10 @@ class StoriesRemoteDataSourceTest {
     }
 
     @Test
-    fun search_withException() = runBlocking {
+    fun search_withExceptionScrapingResults() = runBlocking {
         // Given that the service throws an exception
-        whenever(service.search(query, 1)).thenThrow(IllegalStateException::class.java)
+        doAnswer { throw UnknownHostException() }
+            .whenever(service).search(query, 1)
 
         // When searching for stories
         val result = dataSource.search(query, 1)
@@ -136,29 +138,43 @@ class StoriesRemoteDataSourceTest {
         assertTrue(result is Result.Error)
     }
 
-    private fun withStoriesSuccess(page: Int, users: List<StoryResponse>) {
-        val result = Response.success(users)
-        whenever(service.getStories(page)).thenReturn(CompletableDeferred(result))
+    @Test
+    fun search_withErrorFetchingStories() = runBlocking {
+        // Given that the service responds with error
+        val storyIds = stories.joinToString(",") { it.id.toString() }
+        val error = Response.error<List<StoryResponse>>(400, errorResponseBody)
+        whenever(service.getStories(storyIds)).thenReturn(error)
+
+        // When searching for stories
+        val result = dataSource.search(query, 1)
+
+        // Then error is returned
+        assertTrue(result is Result.Error)
     }
 
-    private fun withStoriesError(page: Int) {
+    @Test
+    fun search_withExceptionFetchingStories() = runBlocking {
+        // Given that the service throws an exception
+        doAnswer { throw UnknownHostException() }
+            .whenever(service).getStories(stories.joinToString(",") { it.id.toString() })
+
+        // When searching for stories
+        val result = dataSource.search(query, 1)
+
+        // Then error is returned
+        assertTrue(result is Result.Error)
+    }
+
+    private suspend fun withStoriesSuccess(page: Int, stories: List<StoryResponse>) {
+        val result = Response.success(stories)
+        whenever(service.getStories(page)).thenReturn(result)
+    }
+
+    private suspend fun withStoriesError(page: Int) {
         val result = Response.error<List<StoryResponse>>(
             400,
             errorResponseBody
         )
-        whenever(service.getStories(page)).thenReturn(CompletableDeferred(result))
-    }
-
-    private fun withSearchSuccess(query: String, page: Int, users: List<StoryResponse>) {
-        val result = Response.success(users)
-        whenever(service.search(query, page)).thenReturn(CompletableDeferred(result))
-    }
-
-    private fun withSearchError(query: String, page: Int) {
-        val result = Response.error<List<StoryResponse>>(
-            400,
-            errorResponseBody
-        )
-        whenever(service.search(query, page)).thenReturn(CompletableDeferred(result))
+        whenever(service.getStories(page)).thenReturn(result)
     }
 }

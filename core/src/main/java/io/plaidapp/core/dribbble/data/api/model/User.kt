@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ data class User(
     @SerializedName("id") val id: Long,
     @SerializedName("name") val name: String,
     @SerializedName("username") val username: String,
-    @SerializedName("avatar_url") val avatarUrl: String? = null
+    @SerializedName("avatar_url") val avatarUrl: String
 ) {
 
-    val highQualityAvatarUrl: String? by lazy {
-        avatarUrl?.replace("/normal/", "/original/")
+    val highQualityAvatarUrl: String by lazy {
+        avatarUrl.replace("/normal/", "/original/")
     }
 }

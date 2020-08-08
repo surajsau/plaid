@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,31 @@
 
 package io.plaidapp.designernews.ui.login
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import io.plaidapp.R
-import io.plaidapp.core.data.CoroutinesContextProvider
+import io.plaidapp.core.data.CoroutinesDispatcherProvider
 import io.plaidapp.core.data.Result
 import io.plaidapp.core.designernews.data.login.LoginRepository
 import io.plaidapp.core.util.event.Event
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.launch
+import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * View Model for [LoginActivity]
  */
 private const val signupUrl = "https://www.designernews.co/users/new"
 
-class LoginViewModel(
+class LoginViewModel @Inject constructor(
     private val loginRepository: LoginRepository,
-    private val contextProvider: CoroutinesContextProvider
+    private val dispatcherProvider: CoroutinesDispatcherProvider
 ) : ViewModel() {
 
-    private var currentJob: Job? = null
+    private var loginJob: Job? = null
 
     private val _uiState = MutableLiveData<LoginUiModel>()
     val uiState: LiveData<LoginUiModel>
@@ -54,45 +57,43 @@ class LoginViewModel(
 
     fun login(username: String, password: String) {
         // only allow one login at a time
-        if (currentJob?.isActive == true) {
+        if (loginJob?.isActive == true) {
             return
         }
-        currentJob = launchLogin(username, password)
+        loginJob = launchLogin(username, password)
     }
 
-    private fun launchLogin(username: String, password: String) = launch(contextProvider.io) {
-        if (!isLoginValid(username, password)) {
-            return@launch
-        }
-        showLoading()
-        val result = loginRepository.login(username, password)
+    private fun launchLogin(username: String, password: String): Job {
+        return viewModelScope.launch(dispatcherProvider.computation) {
+            if (!isLoginValid(username, password)) {
+                return@launch
+            }
+            withContext(dispatcherProvider.main) { showLoading() }
+            val result = loginRepository.login(username, password)
 
-        if (result is Result.Success) {
-            val user = result.data
-            emitUiState(
-                showSuccess = Event(
-                    LoginResultUiModel(
-                        user.displayName.toLowerCase(),
-                        user.portraitUrl
+            withContext(dispatcherProvider.main) {
+                if (result is Result.Success) {
+                    val user = result.data
+                    emitUiState(
+                        showSuccess = Event(
+                            LoginResultUiModel(
+                                user.displayName.toLowerCase(),
+                                user.portraitUrl
+                            )
+                        )
                     )
-                )
-            )
-        } else {
-            emitUiState(
-                showError = Event(R.string.login_failed),
-                enableLoginButton = true
-            )
+                } else {
+                    emitUiState(
+                        showError = Event(R.string.login_failed),
+                        enableLoginButton = true
+                    )
+                }
+            }
         }
     }
 
     private fun showLoading() {
         emitUiState(showProgress = true)
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        // when the VM is destroyed, cancel the running job.
-        currentJob?.cancel()
     }
 
     fun signup() {
@@ -116,7 +117,7 @@ class LoginViewModel(
         showError: Event<Int>? = null,
         showSuccess: Event<LoginResultUiModel>? = null,
         enableLoginButton: Boolean = false
-    ) = launch(contextProvider.main, parent = currentJob) {
+    ) {
         val uiModel = LoginUiModel(showProgress, showError, showSuccess, enableLoginButton)
         _uiState.value = uiModel
     }

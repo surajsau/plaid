@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc.
+ * Copyright 2015 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
 import android.app.SharedElementCallback;
 import android.app.assist.AssistContent;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
@@ -32,40 +31,39 @@ import android.graphics.drawable.AnimatedVectorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.app.ShareCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.TextAppearanceSpan;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
-import android.view.animation.Interpolator;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Toolbar;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.app.ShareCompat;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions;
-import in.uncod.android.bypass.Bypass;
+
 import in.uncod.android.bypass.Markdown;
 import io.plaidapp.core.data.Result;
-import io.plaidapp.core.designernews.Injection;
 import io.plaidapp.core.designernews.data.login.LoginRepository;
-import io.plaidapp.core.designernews.data.stories.model.Story;
 import io.plaidapp.core.designernews.data.login.model.LoggedInUser;
+import io.plaidapp.core.designernews.data.stories.model.Story;
 import io.plaidapp.core.designernews.domain.model.Comment;
 import io.plaidapp.core.ui.transitions.GravityArcMotion;
 import io.plaidapp.core.ui.transitions.MorphTransform;
@@ -73,31 +71,33 @@ import io.plaidapp.core.ui.transitions.ReflowText;
 import io.plaidapp.core.ui.widget.CollapsingTitleLayout;
 import io.plaidapp.core.ui.widget.ElasticDragDismissFrameLayout;
 import io.plaidapp.core.util.Activities;
+import io.plaidapp.core.util.ColorUtils;
 import io.plaidapp.core.util.HtmlUtils;
 import io.plaidapp.core.util.ImeUtils;
 import io.plaidapp.core.util.ViewUtils;
 import io.plaidapp.core.util.customtabs.CustomTabActivityHelper;
 import io.plaidapp.core.util.glide.GlideApp;
 import io.plaidapp.core.util.glide.ImageSpanTarget;
-import io.plaidapp.designernews.InjectionKt;
 import io.plaidapp.designernews.R;
+import io.plaidapp.designernews.dagger.Injector;
 import io.plaidapp.designernews.ui.login.LoginActivity;
 import io.plaidapp.ui.widget.PinnedOffsetView;
 import kotlin.Unit;
+
+import javax.inject.Inject;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static android.view.ViewGroup.MarginLayoutParams;
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
 import static io.plaidapp.core.util.AnimUtils.getFastOutLinearInInterpolator;
 import static io.plaidapp.core.util.AnimUtils.getFastOutSlowInInterpolator;
 import static io.plaidapp.core.util.AnimUtils.getLinearOutSlowInInterpolator;
 
 public class StoryActivity extends AppCompatActivity {
-
-    private static final int RC_LOGIN_UPVOTE = 7;
 
     private View header;
     private RecyclerView commentsList;
@@ -113,7 +113,6 @@ public class StoryActivity extends AppCompatActivity {
     private PinnedOffsetView toolbarBackground;
     @Nullable
     private View background;
-    private TextView upvoteStory;
     private EditText enterComment;
     private ImageButton postComment;
     private int fabExpandDuration;
@@ -123,10 +122,13 @@ public class StoryActivity extends AppCompatActivity {
 
     private Story story;
 
-    private StoryViewModel viewModel;
+    @Inject
+    StoryViewModel viewModel;
+    @Inject
+    LoginRepository loginRepository;
+    @Inject
+    Markdown markdown;
 
-    private LoginRepository loginRepository;
-    private Markdown markdown;
     private CustomTabActivityHelper customTab;
 
     @Override
@@ -134,13 +136,12 @@ public class StoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_designer_news_story);
 
-        Long storyId = getIntent().getLongExtra(Activities.DesignerNews.Story.EXTRA_STORY_ID, -1);
+        long storyId = getIntent().getLongExtra(Activities.DesignerNews.Story.EXTRA_STORY_ID, -1);
         if (storyId == -1) {
             finishAfterTransition();
         }
-        StoryViewModelFactory factory = InjectionKt.provideStoryViewModelFactory(storyId, this);
-        viewModel = ViewModelProviders.of(this, factory).get(StoryViewModel.class);
-        loginRepository = Injection.provideLoginRepository(this);
+
+        Injector.inject(storyId, this);
         bindResources();
 
         story = viewModel.getStory();
@@ -149,15 +150,6 @@ public class StoryActivity extends AppCompatActivity {
 
         fab.setOnClickListener(fabClick);
         chromeFader = new ElasticDragDismissFrameLayout.SystemChromeFader(this);
-        markdown = new Bypass(getResources().getDisplayMetrics(), new Bypass.Options()
-                .setBlockQuoteLineColor(
-                        ContextCompat.getColor(this, io.plaidapp.R.color.designer_news_quote_line))
-                .setBlockQuoteLineWidth(2) // dps
-                .setBlockQuoteLineIndent(8) // dps
-                .setPreImageLinebreakHeight(4) //dps
-                .setBlockQuoteIndentSize(TypedValue.COMPLEX_UNIT_DIP, 2f)
-                .setBlockQuoteTextColor(
-                        ContextCompat.getColor(this, io.plaidapp.R.color.designer_news_quote)));
         layoutManager = new LinearLayoutManager(this);
         commentsList.setLayoutManager(layoutManager);
         commentsList.setItemAnimator(new CommentAnimator(
@@ -199,6 +191,37 @@ public class StoryActivity extends AppCompatActivity {
                 header, new ArrayList<>(0), enterCommentView);
         commentsList.setAdapter(commentsAdapter);
 
+        draggableFrame.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        final int stableListPaddingBottom = commentsList.getPaddingBottom();
+        final int stableListPaddingLeft = commentsList.getPaddingLeft();
+        final int stableListPaddingRight = commentsList.getPaddingRight();
+        final int stableFabMarginBottom = ((MarginLayoutParams) fab.getLayoutParams()).bottomMargin;
+        final int stableFabMarginRight = ((MarginLayoutParams) fab.getLayoutParams()).rightMargin;
+        final View back = findViewById(R.id.back);
+        final int stableBackMarginLeft = back == null ? 0 :
+                ((MarginLayoutParams) back.getLayoutParams()).leftMargin;
+        draggableFrame.setOnApplyWindowInsetsListener((v, insets) -> {
+            final MarginLayoutParams listLp = (MarginLayoutParams) v.getLayoutParams();
+            listLp.topMargin = insets.getSystemWindowInsetTop();
+            v.setLayoutParams(listLp);
+            commentsList.setPadding(
+                    stableListPaddingLeft + commentsList.getPaddingLeft(),
+                    commentsList.getPaddingTop(),
+                    stableListPaddingRight + insets.getSystemWindowInsetRight(),
+                    stableListPaddingBottom + insets.getSystemWindowInsetBottom());
+            final MarginLayoutParams fabLp = (MarginLayoutParams) fab.getLayoutParams();
+            fabLp.rightMargin = stableFabMarginRight + insets.getSystemWindowInsetRight();
+            fabLp.bottomMargin = stableFabMarginBottom + insets.getSystemWindowInsetBottom();
+            fab.setLayoutParams(fabLp);
+            if (back != null) {
+                final MarginLayoutParams backLp = (MarginLayoutParams) back.getLayoutParams();
+                backLp.leftMargin = stableBackMarginLeft + insets.getSystemWindowInsetLeft();
+            }
+            return insets;
+        });
+
         customTab = new CustomTabActivityHelper();
         customTab.setConnectionCallback(customTabConnect);
     }
@@ -237,17 +260,6 @@ public class StoryActivity extends AppCompatActivity {
         fab.setAlpha(1f);
         fabExpand.setVisibility(View.INVISIBLE);
         draggableFrame.addListener(chromeFader);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case RC_LOGIN_UPVOTE:
-                if (resultCode == RESULT_OK) {
-                    upvoteStory();
-                }
-                break;
-        }
     }
 
     @Override
@@ -473,9 +485,8 @@ public class StoryActivity extends AppCompatActivity {
             storyComment.setVisibility(View.GONE);
         }
 
-        upvoteStory = header.findViewById(R.id.story_vote_action);
-        storyUpvoted(story.getVoteCount());
-        upvoteStory.setOnClickListener(v -> upvoteStory());
+        TextView upvoteStory = header.findViewById(R.id.story_vote_action);
+        setVoteCountText(upvoteStory, story.getVoteCount());
 
         final TextView share = header.findViewById(R.id.story_share_action);
         share.setOnClickListener(v -> {
@@ -504,6 +515,12 @@ public class StoryActivity extends AppCompatActivity {
         } else {
             avatar.setVisibility(View.GONE);
         }
+    }
+
+    private void setVoteCountText(TextView upvoteStory, Integer voteCount) {
+        upvoteStory.setText(getResources().getQuantityString(
+                io.plaidapp.R.plurals.upvotes, voteCount,
+                NumberFormat.getInstance().format(voteCount)));
     }
 
     private CharSequence getStoryPosterTimeText(String userDisplayName, String userJob, Date createdAt) {
@@ -569,43 +586,11 @@ public class StoryActivity extends AppCompatActivity {
         commentsAdapter.addComment(comment);
     }
 
-    private void upvoteStory() {
-        if (loginRepository.isLoggedIn()) {
-            if (!upvoteStory.isActivated()) {
-                upvoteStory.setActivated(true);
-                viewModel.storyUpvoteRequested(story.getId(),
-                        it -> {
-                            if (it instanceof Result.Success) {
-                                storyUpvoted(story.getVoteCount() + 1);
-                            } else {
-                                Toast.makeText(this, "Unable to upvote story", Toast.LENGTH_LONG)
-                                        .show();
-                                upvoteStory.setActivated(false);
-                            }
-                            return Unit.INSTANCE;
-                        });
-
-            } else {
-                upvoteStory.setActivated(false);
-                // TODO delete upvote. Not available in v1 API.
-            }
-
-        } else {
-            needsLogin(upvoteStory, RC_LOGIN_UPVOTE);
-        }
-    }
-
-    private void storyUpvoted(int newUpvoteCount) {
-        upvoteStory.setText(getResources().getQuantityString(
-                io.plaidapp.R.plurals.upvotes, newUpvoteCount,
-                NumberFormat.getInstance().format(newUpvoteCount)));
-    }
-
     private void needsLogin(View triggeringView, int requestCode) {
         Intent login = new Intent(StoryActivity.this,
                 LoginActivity.class);
-        MorphTransform.addExtras(login, ContextCompat.getColor(this,
-                io.plaidapp.R.color.background_light),
+        MorphTransform.addExtras(login,
+                ColorUtils.getThemeColor(this, io.plaidapp.core.R.attr.colorSurface),
                 triggeringView.getHeight() / 2);
         ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                 StoryActivity.this,
@@ -877,110 +862,10 @@ public class StoryActivity extends AppCompatActivity {
             });
         }
 
-        private void handleCommentVotesClick(CommentReplyViewHolder holder,
-                                             boolean isUserLoggedIn,
-                                             Comment comment) {
-            if (isUserLoggedIn) {
-                if (!holder.getCommentVotes().isActivated()) {
-                    viewModel.commentUpvoteRequested(story.getId(),
-                            result -> {
-                                if (result instanceof Result.Success) {
-                                    comment.setUpvoted(true);
-                                    ;
-                                    // TODO fix this
-//                                    comment.vote_count++;
-                                    holder.getCommentVotes().setText(String.valueOf(comment.getUpvotesCount()));
-                                    holder.getCommentVotes().setActivated(true);
-                                } else {
-                                    Toast.makeText(StoryActivity.this, "Unable to upvote comment",
-                                            Toast.LENGTH_LONG)
-                                            .show();
-                                }
-                                return Unit.INSTANCE;
-                            });
-
-                } else {
-                    comment.setUpvoted(false);
-                    // TODO fix this
-//                    comment.setVoteCount(comment.getVoteCount() - 1);
-                    holder.getCommentVotes().setText(String.valueOf(comment.getUpvotesCount()));
-                    holder.getCommentVotes().setActivated(false);
-                    // TODO actually delete upvote - florina: why?
-                }
-            } else {
-                needsLogin(holder.getCommentVotes(), 0);
-            }
-            holder.getCommentReply().clearFocus();
-        }
-
-        private void handleCommentReplyFocus(CommentReplyViewHolder holder,
-                                             Interpolator interpolator) {
-            holder.getCommentVotes().animate()
-                    .translationX(-holder.getCommentVotes().getWidth())
-                    .alpha(0f)
-                    .setDuration(200L)
-                    .setInterpolator(interpolator);
-            holder.getReplyLabel().animate()
-                    .translationX(-holder.getCommentVotes().getWidth())
-                    .setDuration(200L)
-                    .setInterpolator(interpolator);
-            holder.getPostReply().setVisibility(View.VISIBLE);
-            holder.getPostReply().setAlpha(0f);
-            holder.getPostReply().animate()
-                    .alpha(1f)
-                    .setDuration(200L)
-                    .setInterpolator(interpolator)
-                    .setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-                            holder.itemView.setHasTransientState(true);
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            holder.itemView.setHasTransientState(false);
-                        }
-                    });
-        }
-
-        private void handleCommentReplyFocusLoss(CommentReplyViewHolder holder,
-                                                 Interpolator interpolator) {
-            holder.getCommentVotes().animate()
-                    .translationX(0f)
-                    .alpha(1f)
-                    .setDuration(200L)
-                    .setInterpolator(interpolator);
-            holder.getReplyLabel().animate()
-                    .translationX(0f)
-                    .setDuration(200L)
-                    .setInterpolator(interpolator);
-            holder.getPostReply().animate()
-                    .alpha(0f)
-                    .setDuration(200L)
-                    .setInterpolator(interpolator)
-                    .setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-                            holder.itemView.setHasTransientState(true);
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            holder.getPostReply().setVisibility(View.INVISIBLE);
-                            holder.itemView.setHasTransientState(true);
-                        }
-                    });
-        }
-
         @NonNull
         private CommentReplyViewHolder createCommentReplyHolder(ViewGroup parent) {
             final CommentReplyViewHolder holder = new CommentReplyViewHolder(getLayoutInflater()
                     .inflate(R.layout.designer_news_comment_actions, parent, false));
-
-            holder.getCommentVotes().setOnClickListener(v -> {
-                Comment comment = getComment(holder.getAdapterPosition());
-                handleCommentVotesClick(holder, loginRepository.isLoggedIn(), comment);
-            });
 
             holder.getPostReply().setOnClickListener(v -> {
                 if (loginRepository.isLoggedIn()) {
@@ -1023,15 +908,13 @@ public class StoryActivity extends AppCompatActivity {
 
             holder.getCommentReply().setOnFocusChangeListener((v, hasFocus) -> {
                 replyToCommentFocused = hasFocus;
-                final Interpolator interpolator = getFastOutSlowInInterpolator(holder
-                        .itemView.getContext());
                 if (hasFocus) {
-                    handleCommentReplyFocus(holder, interpolator);
-                    updateFabVisibility();
+                    holder.createCommentReplyFocusAnimator().start();
+
                 } else {
-                    handleCommentReplyFocusLoss(holder, interpolator);
-                    updateFabVisibility();
+                    holder.createCommentReplyFocusLossAnimator().start();
                 }
+                updateFabVisibility();
                 holder.getPostReply().setActivated(hasFocus);
             });
             return holder;

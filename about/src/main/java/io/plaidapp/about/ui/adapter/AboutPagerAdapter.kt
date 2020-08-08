@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,74 +16,88 @@
 
 package io.plaidapp.about.ui.adapter
 
-import android.support.v4.view.PagerAdapter
-import android.support.v7.widget.RecyclerView
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import io.plaidapp.about.R
-import io.plaidapp.core.util.HtmlUtils
+import androidx.recyclerview.widget.RecyclerView
+import io.plaidapp.about.databinding.AboutIconBinding
+import io.plaidapp.about.databinding.AboutLibsBinding
+import io.plaidapp.about.databinding.AboutPlaidBinding
 import io.plaidapp.about.ui.model.AboutUiModel
-import io.plaidapp.core.util.inflateView
+import io.plaidapp.core.util.HtmlUtils
 import java.security.InvalidParameterException
 
 /**
  * Adapter creating and holding on to pages displayed within [io.plaidapp.about.ui.AboutActivity].
  */
-internal class AboutPagerAdapter(private val uiModel: AboutUiModel) : PagerAdapter() {
+internal class AboutPagerAdapter(private val uiModel: AboutUiModel) :
+    RecyclerView.Adapter<AboutPagerAdapter.AboutViewHolder>() {
 
-    private var aboutPlaid: View? = null
-    private var aboutIcon: View? = null
-    private var aboutLibs: View? = null
+    private var aboutPlaidBinding: AboutPlaidBinding? = null
+    private var aboutIconBinding: AboutIconBinding? = null
+    private var aboutLibsBinding: AboutLibsBinding? = null
 
-    override fun instantiateItem(collection: ViewGroup, position: Int): Any {
-        return getPage(position, collection).also {
-            collection.addView(it)
-        }
-    }
-
-    override fun destroyItem(collection: ViewGroup, position: Int, view: Any) {
-        collection.removeView(view as View)
-    }
-
-    override fun getCount() = 3
-
-    override fun isViewFromObject(view: View, obj: Any) = view === obj
-
-    private fun getPage(position: Int, parent: ViewGroup): View {
+    override fun getItemViewType(position: Int): Int {
         return when (position) {
-            0 -> getAboutAppPage(parent)
-            1 -> getAboutIconPage(parent)
-            2 -> getAboutLibsPage(parent)
+            0 -> 0
+            1 -> 1
+            2 -> 2
             else -> throw InvalidParameterException()
         }
     }
 
-    private fun getAboutIconPage(parent: ViewGroup): View {
-        return aboutIcon ?: parent.inflateView(R.layout.about_icon).apply {
-            findViewById<TextView>(R.id.icon_description).apply {
-                HtmlUtils.setTextWithNiceLinks(this, uiModel.iconAboutText)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AboutViewHolder {
+        return AboutViewHolder(
+            when (viewType) {
+                0 -> getAboutAppPage(parent)
+                1 -> getAboutIconPage(parent)
+                2 -> getAboutLibsPage(parent)
+                else -> throw InvalidParameterException()
             }
-            aboutIcon = this
-        }
+        )
+    }
+
+    override fun getItemCount() = 3
+
+    override fun onBindViewHolder(holder: AboutViewHolder, position: Int) {
+        // do nothing
     }
 
     private fun getAboutAppPage(parent: ViewGroup): View {
-        return aboutPlaid ?: parent.inflateView(R.layout.about_plaid)
-            .apply {
-                findViewById<TextView>(R.id.about_description).apply {
-                    HtmlUtils.setTextWithNiceLinks(this, uiModel.appAboutText)
-                }
-                aboutPlaid = this
-            }
+        val binding = aboutPlaidBinding ?: AboutPlaidBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        ).apply {
+            HtmlUtils.setTextWithNiceLinks(aboutDescription, uiModel.appAboutText)
+            aboutPlaidBinding = this
+        }
+        return binding.root
+    }
+
+    private fun getAboutIconPage(parent: ViewGroup): View {
+        val binding = aboutIconBinding ?: AboutIconBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        ).apply {
+            HtmlUtils.setTextWithNiceLinks(iconDescription, uiModel.iconAboutText)
+            aboutIconBinding = this
+        }
+        return binding.root
     }
 
     private fun getAboutLibsPage(parent: ViewGroup): View {
-        return aboutLibs ?: parent.inflateView(R.layout.about_libs).apply {
-            findViewById<RecyclerView>(R.id.libs_list).apply {
-                adapter = LibraryAdapter(uiModel.librariesUiModel)
-            }
-            aboutLibs = this
+        val binding = aboutLibsBinding ?: AboutLibsBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        ).apply {
+            libsList.adapter = LibraryAdapter(uiModel.librariesUiModel)
+            aboutLibsBinding = this
         }
+        return binding.root
     }
+
+    class AboutViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package io.plaidapp.core.util.event
 
-import android.arch.lifecycle.Observer
+import androidx.lifecycle.Observer
 
 /**
  * An [Observer] for [Event]s, simplifying the pattern of checking if the [Event]'s content has

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,18 @@ import `in`.uncod.android.bypass.Markdown
 import android.util.DisplayMetrics
 import dagger.Module
 import dagger.Provides
-import javax.inject.Singleton
-import javax.inject.Inject
+import io.plaidapp.core.dagger.scope.FeatureScope
 
 /**
- * Dagger module to provide [Markdown].
+ * Provide [Markdown] to this app's components.
  */
-@Module class MarkdownModule @Inject constructor(private val displayMetrics: DisplayMetrics) {
+@Module
+class MarkdownModule constructor(
+    private val displayMetrics: DisplayMetrics,
+    private val options: Bypass.Options = Bypass.Options()
+) {
 
     @Provides
-    @Singleton
-    fun provideMarkdown(): Markdown = Bypass(displayMetrics, Bypass.Options())
+    @FeatureScope
+    fun provideMarkdown(): Markdown = Bypass(displayMetrics, options)
 }

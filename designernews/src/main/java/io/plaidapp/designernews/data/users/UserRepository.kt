@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,17 +48,6 @@ class UserRepository(private val dataSource: UserRemoteDataSource) {
         // save the new users in the cachedUsers
         if (result is Result.Success) {
             result.data.forEach { cachedUsers[it.id] = it }
-        }
-    }
-
-    companion object {
-        @Volatile
-        private var INSTANCE: UserRepository? = null
-
-        fun getInstance(dataSource: UserRemoteDataSource): UserRepository {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: UserRepository(dataSource).also { INSTANCE = it }
-            }
         }
     }
 }

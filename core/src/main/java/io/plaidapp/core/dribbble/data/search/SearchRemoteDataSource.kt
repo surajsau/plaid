@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,12 @@ import io.plaidapp.core.dribbble.data.search.DribbbleSearchService.Companion.PER
 import io.plaidapp.core.dribbble.data.search.SearchRemoteDataSource.SortOrder.RECENT
 import io.plaidapp.core.util.safeApiCall
 import java.io.IOException
+import javax.inject.Inject
 
 /**
  * Work with our fake Dribbble API to search for shots by query term.
  */
-class SearchRemoteDataSource(private val service: DribbbleSearchService) {
+class SearchRemoteDataSource @Inject constructor(private val service: DribbbleSearchService) {
 
     suspend fun search(
         query: String,
@@ -44,7 +45,7 @@ class SearchRemoteDataSource(private val service: DribbbleSearchService) {
         sortOrder: SortOrder = RECENT,
         pageSize: Int = PER_PAGE_DEFAULT
     ): Result<List<Shot>> {
-        val response = service.searchDeferred(query, page, sortOrder.sort, pageSize).await()
+        val response = service.searchDeferred(query, page, sortOrder.sort, pageSize)
         if (response.isSuccessful) {
             val body = response.body()
             if (body != null) {

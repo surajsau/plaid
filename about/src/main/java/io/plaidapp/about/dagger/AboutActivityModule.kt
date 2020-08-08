@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,20 @@ import dagger.Module
 import dagger.Provides
 import io.plaidapp.about.ui.AboutActivity
 import io.plaidapp.about.ui.AboutStyler
-import javax.inject.Singleton
+import io.plaidapp.core.dagger.scope.FeatureScope
 
 /**
- * Dagger module providing stuff from [AboutActivity].
+ * Dagger module providing stuff for [AboutActivity].
  */
 @Module class AboutActivityModule(private val activity: AboutActivity) {
 
     @Provides
-    @Singleton
     fun provideContext(): AboutActivity = activity
 
     @Provides
-    @Singleton
     fun provideResources(): Resources = activity.resources
 
     @Provides
-    @Singleton
-    fun provideAboutStyler() = AboutStyler(activity)
+    @FeatureScope
+    fun provideAboutStyler(): AboutStyler = AboutStyler(activity)
 }

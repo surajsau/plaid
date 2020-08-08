@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,21 @@
 
 package io.plaidapp.designernews.ui.story
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
-import io.plaidapp.core.data.CoroutinesContextProvider
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import io.plaidapp.core.data.CoroutinesDispatcherProvider
 import io.plaidapp.core.data.Result
 import io.plaidapp.core.designernews.data.stories.model.Story
 import io.plaidapp.core.designernews.domain.model.Comment
-import io.plaidapp.designernews.domain.CommentsWithRepliesAndUsersUseCase
+import io.plaidapp.core.util.exhaustive
+import io.plaidapp.designernews.domain.GetCommentsWithRepliesAndUsersUseCase
 import io.plaidapp.designernews.domain.GetStoryUseCase
 import io.plaidapp.designernews.domain.PostReplyUseCase
 import io.plaidapp.designernews.domain.PostStoryCommentUseCase
-import io.plaidapp.designernews.domain.UpvoteCommentUseCase
-import io.plaidapp.designernews.domain.UpvoteStoryUseCase
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * [ViewModel] responsible for providing data for [StoryActivity] and for handling user actions.
@@ -42,10 +41,8 @@ class StoryViewModel(
     getStoryUseCase: GetStoryUseCase,
     private var postStoryComment: PostStoryCommentUseCase,
     private var postReply: PostReplyUseCase,
-    private val commentsWithRepliesAndUsers: CommentsWithRepliesAndUsersUseCase,
-    private val upvoteStory: UpvoteStoryUseCase,
-    private val upvoteComment: UpvoteCommentUseCase,
-    private val contextProvider: CoroutinesContextProvider
+    private val getCommentsWithRepliesAndUsers: GetCommentsWithRepliesAndUsersUseCase,
+    private val dispatcherProvider: CoroutinesDispatcherProvider
 ) : ViewModel() {
 
     private val _uiModel = MutableLiveData<StoryUiModel>()
@@ -62,60 +59,36 @@ class StoryViewModel(
                 getComments()
             }
             is Result.Error -> throw result.exception
-        }
-    }
-
-    private val parentJob = Job()
-
-    fun storyUpvoteRequested(storyId: Long, onResult: (result: Result<Unit>) -> Unit) = launch(
-        context = contextProvider.io,
-        parent = parentJob
-    ) {
-        val result = upvoteStory(storyId)
-        withContext(contextProvider.io) { onResult(result) }
-    }
-
-    fun commentUpvoteRequested(commentId: Long, onResult: (result: Result<Unit>) -> Unit) = launch(
-        context = contextProvider.io,
-        parent = parentJob
-    ) {
-        val result = upvoteComment(commentId)
-        withContext(contextProvider.io) { onResult(result) }
+        }.exhaustive
     }
 
     fun commentReplyRequested(
         text: CharSequence,
         commentId: Long,
         onResult: (result: Result<Comment>) -> Unit
-    ) = launch(contextProvider.io, parent = parentJob) {
+    ) = viewModelScope.launch(dispatcherProvider.computation) {
         val result = postReply(text.toString(), commentId)
-        withContext(contextProvider.main) { onResult(result) }
+        withContext(dispatcherProvider.main) { onResult(result) }
     }
 
     fun storyReplyRequested(
         text: CharSequence,
         onResult: (result: Result<Comment>) -> Unit
-    ) = launch(contextProvider.io, parent = parentJob) {
+    ) = viewModelScope.launch(dispatcherProvider.computation) {
         val result = postStoryComment(text.toString(), story.id)
-        withContext(contextProvider.main) { onResult(result) }
+        withContext(dispatcherProvider.main) { onResult(result) }
     }
 
-    override fun onCleared() {
-        parentJob.cancel()
-        super.onCleared()
-    }
-
-    private fun getComments() = launch(contextProvider.io, parent = parentJob) {
-        val result = commentsWithRepliesAndUsers(story.links.comments)
+    private fun getComments() = viewModelScope.launch(dispatcherProvider.computation) {
+        val result = getCommentsWithRepliesAndUsers(story.links.comments)
         if (result is Result.Success) {
-            emitUiModel(result.data)
+            withContext(dispatcherProvider.main) { emitUiModel(result.data) }
         }
     }
 
-    private fun emitUiModel(comments: List<Comment>) =
-        launch(contextProvider.main, parent = parentJob) {
-            _uiModel.value = StoryUiModel(comments)
-        }
+    private fun emitUiModel(comments: List<Comment>) {
+        _uiModel.value = StoryUiModel(comments)
+    }
 }
 
 /**

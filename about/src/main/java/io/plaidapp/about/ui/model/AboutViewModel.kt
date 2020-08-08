@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +17,27 @@
 package io.plaidapp.about.ui.model
 
 import `in`.uncod.android.bypass.Markdown
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
 import android.content.res.ColorStateList
 import android.content.res.Resources
-import android.support.annotation.ColorInt
-import android.support.annotation.StringRes
-import android.support.annotation.VisibleForTesting
-import android.text.Layout
 import android.text.Spannable
-import android.text.SpannableString
 import android.text.SpannableStringBuilder
-import android.text.style.AlignmentSpan
-import androidx.core.text.plusAssign
+import androidx.annotation.ColorInt
+import androidx.annotation.StringRes
+import androidx.annotation.VisibleForTesting
 import androidx.core.text.toSpannable
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import io.plaidapp.about.R
 import io.plaidapp.about.domain.model.Library
 import io.plaidapp.about.ui.AboutStyler
 import io.plaidapp.core.util.event.Event
-import javax.inject.Inject
 import kotlin.LazyThreadSafetyMode.NONE
 
 /**
  * [ViewModel] for the [io.plaidapp.about.ui.AboutActivity].
  */
-internal class AboutViewModel @Inject constructor(
+internal class AboutViewModel(
     private val aboutStyler: AboutStyler,
     private val resources: Resources,
     private val markdown: Markdown
@@ -61,42 +56,36 @@ internal class AboutViewModel @Inject constructor(
                 highlightColor
             )
 
-            val about1 = SpannableString(resources.getString(R.string.about_plaid_1))
-            about1 += AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER)
-
-            val about2 = getSpannableFromMarkdown(
-                R.string.about_plaid_2,
+            val about1 = getSpannableFromMarkdown(
+                R.string.about_plaid_1,
                 linksColor,
                 highlightColor
             )
-            about2 += AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER)
 
-            val about3 = getSpannableFromMarkdown(
-                R.string.about_plaid_3,
+            val about2 = getSpannableFromMarkdown(
+                R.string.about_plaid_2,
                 linksColor, highlightColor
             )
-            about3 += AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER)
-            spannableFrom(about0, "\n\n", about1, "\n", about2, "\n\n", about3)
+            spannableFrom(about0, "\n\n", about1, "\n\n", about2)
         }
     }
 
     private val iconAboutText: CharSequence by lazy(NONE) {
 
-        val icon0 = resources.getString(R.string.about_icon_0)
         with(aboutStyler) {
-            val icon1 = getSpannableFromMarkdown(R.string.about_icon_1, linksColor, highlightColor)
-            spannableFrom(icon0, "\n", icon1)
+            val iconText = getSpannableFromMarkdown(R.string.about_icon, linksColor, highlightColor)
+            spannableFrom(iconText)
         }
     }
 
     @VisibleForTesting
     internal val libraries = listOf(
         Library(
-            "Android support libraries",
-            "The Android support libraries offer a number of features that are " +
+            "Android Jetpack",
+            "Android Jetpack offer a number of features that are " +
                     "not built into the framework.",
-            "https://developer.android.com/topic/libraries/support-library",
-            "https://avatars.githubusercontent.com/u/32689599",
+            "https://developer.android.com/jetpack/",
+            "https://4.bp.blogspot.com/-NnAkV5vpYuw/XNMYF4RtLvI/AAAAAAAAI70/kdgLm3cnTO4FB4rUC0v9smscN3zHJPlLgCLcBGAs/s1600/Jetpack_logo%2B%25282%2529.png",
             false
         ),
         Library(
@@ -114,10 +103,10 @@ internal class AboutViewModel @Inject constructor(
             true
         ),
         Library(
-            "Crashlytics",
+            "Firebase Crashlytics",
             "The most powerful, yet lightest weight crash reporting solution.",
             "https://firebase.google.com/products/crashlytics/",
-            "https://get.fabric.io/assets/logo_crashlytics-9b74c30b45657fa925e1659ff5e550a8.png",
+            "https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_96dp.png",
             false
         ),
         Library(
@@ -161,7 +150,7 @@ internal class AboutViewModel @Inject constructor(
             "Mockito",
             "Tasty mocking framework for unit tests in Java",
             "http://site.mockito.org/",
-            "https://raw.githubusercontent.com/mockito/mockito/master/src/javadoc/org/mockito/logo.png",
+            "https://avatars3.githubusercontent.com/u/2054056?s=200&v=4",
             false
 
         ),
@@ -186,13 +175,6 @@ internal class AboutViewModel @Inject constructor(
             "http://square.github.io/retrofit/",
             "https://avatars.githubusercontent.com/u/82592",
             false
-        ),
-        Library(
-            "Kotlin Coroutine Adapter",
-            "A Retrofit 2 CallAdapter.Factory for Kotlin coroutine's Deferred.",
-            "https://github.com/JakeWharton/retrofit2-kotlin-coroutines-adapter",
-            "https://avatars.githubusercontent.com/u/66577",
-            true
         )
     )
 

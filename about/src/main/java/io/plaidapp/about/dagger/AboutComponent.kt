@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google, Inc.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,16 @@ package io.plaidapp.about.dagger
 import dagger.BindsInstance
 import dagger.Component
 import io.plaidapp.about.ui.AboutActivity
+import io.plaidapp.core.dagger.BaseActivityComponent
 import io.plaidapp.core.dagger.MarkdownModule
-import javax.inject.Singleton
+import io.plaidapp.core.dagger.scope.FeatureScope
 
 /**
  * Dagger component for `about` feature module.
  */
-@Singleton
 @Component(modules = [AboutActivityModule::class, MarkdownModule::class])
-interface AboutComponent {
-
-    fun inject(activity: AboutActivity)
+@FeatureScope
+interface AboutComponent : BaseActivityComponent<AboutActivity> {
 
     @Component.Builder
     interface Builder {
